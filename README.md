@@ -1,0 +1,1 @@
+# pulumi-for-aws-with-golang
