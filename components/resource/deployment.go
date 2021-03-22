@@ -21,8 +21,9 @@ type Vpc struct {
 }
 
 type Subnet struct {
-	Cidr string `json:"cidr"`
-	Tag  string `json:"tag"`
+	Cidr             string `json:"cidr"`
+	AvailabilityZone string `json:"availabilityZone"`
+	Tag              string `json:"tag"`
 }
 
 type NetworkInterface struct {
@@ -39,13 +40,14 @@ type Instance struct {
 type Deployment struct {
 }
 
-func newRegion(region Region) *Region{
+func newRegion(region Region) *Region {
 	return &Region{
 		ResourceName:     region.ResourceName,
 		Location:         region.Location,
 		Vpc:              region.Vpc,
 		Subnet:           region.Subnet,
 		NetworkInterface: region.NetworkInterface,
+		Instance:         region.Instance,
 	}
 }
 
@@ -74,10 +76,12 @@ func (d *Deployment) createNewSubnet(
 	region *Region,
 	newVpc *ec2.Vpc,
 	) (*ec2.Subnet, error) {
-	newSubnet, err := ec2.NewSubnet(ctx, "mySubnet", &ec2.SubnetArgs{
+	newSubnet, err := ec2.NewSubnet(ctx,
+		fmt.Sprintf("%s%s", region.ResourceName, "-subnet"),
+		&ec2.SubnetArgs{
 		VpcId:            newVpc.ID(),
 		CidrBlock:        pulumi.String(region.Subnet.Cidr),
-		AvailabilityZone: pulumi.String(region.Location),
+		AvailabilityZone: pulumi.String(region.Subnet.AvailabilityZone),
 		Tags: pulumi.StringMap{
 			"Name": pulumi.String(region.Subnet.Tag),
 		},
@@ -120,7 +124,7 @@ func (d *Deployment) createNewInstance(
 	newNetworkInterface *ec2.NetworkInterface,
 ) (*ec2.Instance, error) {
 	instance, err := ec2.NewInstance(ctx,
-		fmt.Sprintf("%s%s", region.ResourceName, "-instance"),
+		fmt.Sprintf("%s%s", region.ResourceName, "Instance"),
 		&ec2.InstanceArgs{
 		Ami:          pulumi.String(region.Instance.AMI),
 		InstanceType: pulumi.String(region.Instance.InstanceType),
@@ -129,9 +133,6 @@ func (d *Deployment) createNewInstance(
 				NetworkInterfaceId: newNetworkInterface.ID(),
 				DeviceIndex:        pulumi.Int(0),
 			},
-		},
-		CreditSpecification: &ec2.InstanceCreditSpecificationArgs{
-			CpuCredits: pulumi.String(region.Instance.Tag),
 		},
 	})
 
