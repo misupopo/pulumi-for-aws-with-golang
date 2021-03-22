@@ -1,4 +1,4 @@
-module golangToAWS
+module pulumi-for-aws-with-golang
 
 go 1.14
 
