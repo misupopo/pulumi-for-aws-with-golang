@@ -37,6 +37,12 @@ func Setup(ctx *pulumi.Context) error {
 		return err
 	}
 
+	newSubnet, err := deployment.createNewSubnet(ctx, region, newVpc)
+
+	if err != nil {
+		return err
+	}
+
 	//ctx.Export("test", pulumi.Printf("%v", r.Vpc))
 	//fmt.Printf("%v", r)
 

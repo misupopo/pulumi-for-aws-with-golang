@@ -4,5 +4,9 @@
   "vpc": {
     "cidr": "172.16.0.0/16",
     "tag": "vpcTest"
+  },
+  "subnet": {
+    "cidr": "172.16.10.0/24",
+    "tag": "subnetTest"
   }
 }

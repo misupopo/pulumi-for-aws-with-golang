@@ -10,9 +10,15 @@ type Region struct {
 	ResourceName string `json:"ResourceName"`
 	Location     string `json:"Location"`
 	Vpc          *Vpc   `json:"vpc"`
+	Subnet       *Vpc   `json:"subnet"`
 }
 
 type Vpc struct {
+	Cidr string `json:"cidr"`
+	Tag  string `json:"tag"`
+}
+
+type Subnet struct {
 	Cidr string `json:"cidr"`
 	Tag  string `json:"tag"`
 }
@@ -25,6 +31,7 @@ func newRegion(region Region) *Region{
 		ResourceName: region.ResourceName,
 		Location:     region.Location,
 		Vpc:          region.Vpc,
+		Subnet:       region.Subnet,
 	}
 }
 
@@ -35,9 +42,9 @@ func (d *Deployment) createNewVpc(
 	newVpc, err := ec2.NewVpc(ctx,
 		fmt.Sprintf("%s%s", region.ResourceName, "-vpc"),
 		&ec2.VpcArgs{
-		CidrBlock: pulumi.String("172.16.0.0/16"),
+		CidrBlock: pulumi.String(region.Vpc.Cidr),
 		Tags: pulumi.StringMap{
-			"Name": pulumi.String("tf-example"),
+			"Name": pulumi.String(region.Vpc.Tag),
 		},
 	})
 
@@ -46,4 +53,25 @@ func (d *Deployment) createNewVpc(
 	}
 
 	return newVpc, nil
+}
+
+func (d *Deployment) createNewSubnet(
+	ctx *pulumi.Context,
+	region *Region,
+	newVpc *ec2.Vpc,
+	) (*ec2.Subnet, error) {
+	newSubnet, err := ec2.NewSubnet(ctx, "mySubnet", &ec2.SubnetArgs{
+		VpcId:            newVpc.ID(),
+		CidrBlock:        pulumi.String(region.Subnet.Cidr),
+		AvailabilityZone: pulumi.String(region.Location),
+		Tags: pulumi.StringMap{
+			"Name": pulumi.String(region.Subnet.Tag),
+		},
+	})
+
+	if err != nil {
+		return nil, err
+	}
+
+	return newSubnet, nil
 }
