@@ -2,23 +2,9 @@ package resource
 
 import (
 	"encoding/json"
-	"github.com/pulumi/pulumi-aws/sdk/v3/go/aws/ec2"
 	"github.com/pulumi/pulumi/sdk/v2/go/pulumi"
 	"io/ioutil"
 )
-
-// GetInstancesは
-func GetInstances(ctx *pulumi.Context) (*ec2.GetInstancesResult, error) {
-	result, err := ec2.GetInstances(ctx, &ec2.GetInstancesArgs{
-		InstanceTags: map[string]string{},
-	})
-
-	if err != nil {
-		return nil, err
-	}
-
-	return result, nil
-}
 
 func Setup(ctx *pulumi.Context) error {
 	config, _ := ioutil.ReadFile("./config.json")
@@ -34,22 +20,32 @@ func Setup(ctx *pulumi.Context) error {
 	newVpc, err := deployment.createNewVpc(ctx, region)
 
 	if err != nil {
+		ctx.Export("createNewVpc error", pulumi.Printf("%v", err))
 		return err
 	}
 
 	newSubnet, err := deployment.createNewSubnet(ctx, region, newVpc)
 
 	if err != nil {
+		ctx.Export("createNewSubnet error", pulumi.Printf("%v", err))
 		return err
 	}
 
 	newNetworkInterface, err := deployment.createNetworkInterface(ctx, region, newSubnet)
 
+	if err != nil {
+		ctx.Export("createNetworkInterface error", pulumi.Printf("%v", err))
+		return err
+	}
 
+	newInstance, err := deployment.createNewInstance(ctx, region, newNetworkInterface)
 
-	//ctx.Export("test", pulumi.Printf("%v", r.Vpc))
-	//fmt.Printf("%v", r)
+	if err != nil {
+		ctx.Export("createNewInstance error", pulumi.Printf("%v", err))
+		return err
+	}
 
+	ctx.Export("newInstance", pulumi.Printf("%v", newInstance))
 
 	return nil
 }

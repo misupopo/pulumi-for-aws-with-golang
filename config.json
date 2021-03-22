@@ -12,5 +12,10 @@
   "networkInterface": {
     "privateIp": "172.16.10.100",
     "tag": "networkInterfaceTest"
+  },
+  "instance": {
+    "ami": "ami-02701bcdc5509e57b",
+    "instanceType": "t2.xlarge",
+    "tag": "instanceTest"
   }
 }

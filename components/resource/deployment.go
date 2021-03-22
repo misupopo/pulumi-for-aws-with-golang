@@ -12,6 +12,7 @@ type Region struct {
 	Vpc              *Vpc              `json:"vpc"`
 	Subnet           *Subnet           `json:"subnet"`
 	NetworkInterface *NetworkInterface `json:"networkInterface"`
+	Instance         *Instance         `json:"instance"`
 }
 
 type Vpc struct {
@@ -27,6 +28,12 @@ type Subnet struct {
 type NetworkInterface struct {
 	PrivateIp string `json:"privateIp"`
 	Tag       string `json:"tag"`
+}
+
+type Instance struct {
+	AMI          string `json:"ami"`
+	InstanceType string `json:"instanceType"`
+	Tag          string `json:"tag"`
 }
 
 type Deployment struct {
@@ -106,3 +113,33 @@ func (d *Deployment) createNetworkInterface(
 
 	return networkInterface, nil
 }
+
+func (d *Deployment) createNewInstance(
+	ctx *pulumi.Context,
+	region *Region,
+	newNetworkInterface *ec2.NetworkInterface,
+) (*ec2.Instance, error) {
+	instance, err := ec2.NewInstance(ctx,
+		fmt.Sprintf("%s%s", region.ResourceName, "-instance"),
+		&ec2.InstanceArgs{
+		Ami:          pulumi.String(region.Instance.AMI),
+		InstanceType: pulumi.String(region.Instance.InstanceType),
+		NetworkInterfaces: ec2.InstanceNetworkInterfaceArray{
+			&ec2.InstanceNetworkInterfaceArgs{
+				NetworkInterfaceId: newNetworkInterface.ID(),
+				DeviceIndex:        pulumi.Int(0),
+			},
+		},
+		CreditSpecification: &ec2.InstanceCreditSpecificationArgs{
+			CpuCredits: pulumi.String(region.Instance.Tag),
+		},
+	})
+
+	if err != nil {
+		return nil, err
+	}
+
+	return instance, nil
+}
+
+
