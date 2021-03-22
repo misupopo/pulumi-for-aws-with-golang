@@ -7,10 +7,11 @@ import (
 )
 
 type Region struct {
-	ResourceName string `json:"ResourceName"`
-	Location     string `json:"Location"`
-	Vpc          *Vpc   `json:"vpc"`
-	Subnet       *Vpc   `json:"subnet"`
+	ResourceName     string            `json:"ResourceName"`
+	Location         string            `json:"Location"`
+	Vpc              *Vpc              `json:"vpc"`
+	Subnet           *Subnet           `json:"subnet"`
+	NetworkInterface *NetworkInterface `json:"networkInterface"`
 }
 
 type Vpc struct {
@@ -23,15 +24,21 @@ type Subnet struct {
 	Tag  string `json:"tag"`
 }
 
+type NetworkInterface struct {
+	PrivateIp string `json:"privateIp"`
+	Tag       string `json:"tag"`
+}
+
 type Deployment struct {
 }
 
 func newRegion(region Region) *Region{
 	return &Region{
-		ResourceName: region.ResourceName,
-		Location:     region.Location,
-		Vpc:          region.Vpc,
-		Subnet:       region.Subnet,
+		ResourceName:     region.ResourceName,
+		Location:         region.Location,
+		Vpc:              region.Vpc,
+		Subnet:           region.Subnet,
+		NetworkInterface: region.NetworkInterface,
 	}
 }
 
@@ -74,4 +81,28 @@ func (d *Deployment) createNewSubnet(
 	}
 
 	return newSubnet, nil
+}
+
+func (d *Deployment) createNetworkInterface(
+	ctx *pulumi.Context,
+	region *Region,
+	newSubnet *ec2.Subnet,
+) (*ec2.NetworkInterface, error) {
+	networkInterface, err := ec2.NewNetworkInterface(ctx,
+		fmt.Sprintf("%s%s", region.ResourceName, "-networkInterface"),
+		&ec2.NetworkInterfaceArgs{
+		SubnetId: newSubnet.ID(),
+		PrivateIps: pulumi.StringArray{
+			pulumi.String(region.NetworkInterface.PrivateIp),
+		},
+		Tags: pulumi.StringMap{
+			"Name": pulumi.String(region.NetworkInterface.Tag),
+		},
+	})
+
+	if err != nil {
+		return nil, err
+	}
+
+	return networkInterface, nil
 }

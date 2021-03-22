@@ -8,5 +8,9 @@
   "subnet": {
     "cidr": "172.16.10.0/24",
     "tag": "subnetTest"
+  },
+  "networkInterface": {
+    "privateIp": "172.16.10.100",
+    "tag": "networkInterfaceTest"
   }
 }

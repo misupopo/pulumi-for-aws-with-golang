@@ -43,6 +43,10 @@ func Setup(ctx *pulumi.Context) error {
 		return err
 	}
 
+	newNetworkInterface, err := deployment.createNetworkInterface(ctx, region, newSubnet)
+
+
+
 	//ctx.Export("test", pulumi.Printf("%v", r.Vpc))
 	//fmt.Printf("%v", r)
 
