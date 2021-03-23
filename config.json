@@ -13,6 +13,30 @@
     "privateIp": "172.16.10.100",
     "tag": "networkInterfaceTest"
   },
+  "securityGroup": {
+    "ingress": [
+      {
+        "protocol": "tcp",
+        "toPort": 22,
+        "fromPort": 22,
+        "description": "Allow inbound TCP 22",
+        "cidrBlocks": [
+          "0.0.0.0/0"
+        ]
+      }
+    ],
+    "egress": [
+      {
+        "protocol": "-1",
+        "toPort": 0,
+        "fromPort": 0,
+        "description": "Allow all outbound traffic",
+        "cidrBlocks": [
+          "0.0.0.0/0"
+        ]
+      }
+    ]
+  },
   "instance": {
     "ami": "ami-02701bcdc5509e57b",
     "instanceType": "t2.xlarge",

@@ -12,6 +12,7 @@ type Region struct {
 	Vpc              *Vpc              `json:"vpc"`
 	Subnet           *Subnet           `json:"subnet"`
 	NetworkInterface *NetworkInterface `json:"networkInterface"`
+	SecurityGroup    *SecurityGroup    `json:"SecurityGroup"`
 	Instance         *Instance         `json:"instance"`
 }
 
@@ -31,6 +32,27 @@ type NetworkInterface struct {
 	Tag       string `json:"tag"`
 }
 
+type SecurityGroup struct {
+	Ingress []Ingress `json:"ingress"`
+	Egress  []Egress  `json:"egress"`
+}
+
+type Ingress struct {
+	Protocol    string   `json:"protocol"`
+	ToPort      int      `json:"toPort"`
+	FromPort    int      `json:"fromPort"`
+	Description string   `json:"description"`
+	CidrBlocks  []string `json:"cidrBlocks"`
+}
+
+type Egress struct {
+	Protocol    string   `json:"protocol"`
+	ToPort      int      `json:"toPort"`
+	FromPort    int      `json:"fromPort"`
+	Description string   `json:"description"`
+	CidrBlocks  []string `json:"cidrBlocks"`
+}
+
 type Instance struct {
 	AMI          string `json:"ami"`
 	InstanceType string `json:"instanceType"`
@@ -47,6 +69,7 @@ func newRegion(region Region) *Region {
 		Vpc:              region.Vpc,
 		Subnet:           region.Subnet,
 		NetworkInterface: region.NetworkInterface,
+		SecurityGroup:    region.SecurityGroup,
 		Instance:         region.Instance,
 	}
 }
@@ -122,19 +145,21 @@ func (d *Deployment) createNewInstance(
 	ctx *pulumi.Context,
 	region *Region,
 	newNetworkInterface *ec2.NetworkInterface,
+	newSecurityGroup *ec2.SecurityGroup,
 ) (*ec2.Instance, error) {
 	instance, err := ec2.NewInstance(ctx,
 		fmt.Sprintf("%s%s", region.ResourceName, "Instance"),
 		&ec2.InstanceArgs{
-		Ami:          pulumi.String(region.Instance.AMI),
-		InstanceType: pulumi.String(region.Instance.InstanceType),
-		NetworkInterfaces: ec2.InstanceNetworkInterfaceArray{
-			&ec2.InstanceNetworkInterfaceArgs{
-				NetworkInterfaceId: newNetworkInterface.ID(),
-				DeviceIndex:        pulumi.Int(0),
+			VpcSecurityGroupIds: pulumi.StringArray{newSecurityGroup.Name},
+			Ami:                 pulumi.String(region.Instance.AMI),
+			InstanceType:        pulumi.String(region.Instance.InstanceType),
+			NetworkInterfaces: ec2.InstanceNetworkInterfaceArray{
+				&ec2.InstanceNetworkInterfaceArgs{
+					NetworkInterfaceId: newNetworkInterface.ID(),
+					DeviceIndex:        pulumi.Int(0),
+				},
 			},
-		},
-	})
+		})
 
 	if err != nil {
 		return nil, err
@@ -143,4 +168,64 @@ func (d *Deployment) createNewInstance(
 	return instance, nil
 }
 
+func (d *Deployment) createNewSecurityGroup(
+	ctx *pulumi.Context,
+	region *Region,
+	newVpc *ec2.Vpc,
+) (*ec2.SecurityGroup, error) {
+	//var createdEgress []ec2.SecurityGroupIngressArray
+	//
+	//for _, v := range region.SecurityGroup.Ingress {
+	//	createdEgress = append(createdEgress, ec2.SecurityGroupIngressArgs{
+	//		Protocol:    pulumi.String(v.Protocol),
+	//		ToPort:      pulumi.Int(v.ToPort),
+	//		FromPort:    pulumi.Int(v.FromPort),
+	//		Description: pulumi.String(v.Description),
+	//		CidrBlocks:  pulumi.StringArray{
+	//			pulumi.String("0.0.0.0/0"),
+	//		},
+	//	})
+	//	//createdEgress[i] = ec2.SecurityGroupIngressArgs{
+	//	//	Protocol:    pulumi.String(v.Protocol),
+	//	//	ToPort:      pulumi.Int(v.ToPort),
+	//	//	FromPort:    pulumi.Int(v.FromPort),
+	//	//	Description: pulumi.String(v.Description),
+	//	//}
+	//}
 
+	securityGroup, err := ec2.NewSecurityGroup(ctx,
+		"ssh-sg",
+		&ec2.SecurityGroupArgs{
+		Name:        pulumi.String("ssh-sg"),
+		VpcId:       newVpc.ID(),
+		Description: pulumi.String("Allows SSH traffic to bastion hosts"),
+		Ingress: ec2.SecurityGroupIngressArray{
+			ec2.SecurityGroupIngressArgs{
+				Protocol:    pulumi.String(region.SecurityGroup.Ingress[0].Protocol),
+				ToPort:      pulumi.Int(region.SecurityGroup.Ingress[0].ToPort),
+				FromPort:    pulumi.Int(region.SecurityGroup.Ingress[0].FromPort),
+				Description: pulumi.String(region.SecurityGroup.Ingress[0].Description),
+				CidrBlocks:  pulumi.StringArray{
+					pulumi.String(region.SecurityGroup.Ingress[0].CidrBlocks[0]),
+				},
+			},
+		},
+		Egress: ec2.SecurityGroupEgressArray{
+			ec2.SecurityGroupEgressArgs{
+				Protocol:    pulumi.String(region.SecurityGroup.Egress[0].Protocol),
+				ToPort:      pulumi.Int(region.SecurityGroup.Egress[0].ToPort),
+				FromPort:    pulumi.Int(region.SecurityGroup.Egress[0].FromPort),
+				Description: pulumi.String(region.SecurityGroup.Egress[0].Description),
+				CidrBlocks:  pulumi.StringArray{
+					pulumi.String(region.SecurityGroup.Egress[0].CidrBlocks[0]),
+				},
+			},
+		},
+	})
+
+	if err != nil {
+		return nil, err
+	}
+
+	return securityGroup, nil
+}

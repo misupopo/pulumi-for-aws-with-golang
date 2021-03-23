@@ -38,7 +38,14 @@ func Setup(ctx *pulumi.Context) error {
 		return err
 	}
 
-	_, err = deployment.createNewInstance(ctx, region, newNetworkInterface)
+	newSecurityGroup, err := deployment.createNewSecurityGroup(ctx, region, newVpc)
+
+	if err != nil {
+		ctx.Export("createNewSecurityGroup error", pulumi.Printf("%v", err))
+		return err
+	}
+
+	_, err = deployment.createNewInstance(ctx, region, newNetworkInterface, newSecurityGroup)
 
 	if err != nil {
 		ctx.Export("createNewInstance error", pulumi.Printf("%v", err))
