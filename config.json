@@ -14,6 +14,7 @@
     "tag": "networkInterfaceTest"
   },
   "securityGroup": {
+    "description": "test security group",
     "ingress": [
       {
         "protocol": "tcp",

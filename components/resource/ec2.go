@@ -23,6 +23,7 @@ type NetworkInterface struct {
 }
 
 type SecurityGroup struct {
+	Description string `json:"description"`
 	Ingress []Ingress `json:"ingress"`
 	Egress  []Egress  `json:"egress"`
 }
@@ -144,9 +145,9 @@ func (d *Deployment) createNewSecurityGroup(
 	securityGroup, err := ec2.NewSecurityGroup(ctx,
 		"ssh-sg",
 		&ec2.SecurityGroupArgs{
-			Name:        pulumi.String("ssh-sg"),
+			Name:        pulumi.String(fmt.Sprintf("%s%s", region.ResourceName, "-security-group")),
 			VpcId:       newVpc.ID(),
-			Description: pulumi.String("Allows SSH traffic to bastion hosts"),
+			Description: pulumi.String(region.SecurityGroup.Description),
 			Ingress: ec2.SecurityGroupIngressArray{
 				ec2.SecurityGroupIngressArgs{
 					Protocol:    pulumi.String(region.SecurityGroup.Ingress[0].Protocol),
