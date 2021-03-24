@@ -116,33 +116,6 @@ func (d *Deployment) createNetworkInterface(
 	return networkInterface, nil
 }
 
-func (d *Deployment) createNewInstance(
-	ctx *pulumi.Context,
-	region *Region,
-	newNetworkInterface *ec2.NetworkInterface,
-	newSecurityGroup *ec2.SecurityGroup,
-) (*ec2.Instance, error) {
-	instance, err := ec2.NewInstance(ctx,
-		fmt.Sprintf("%s%s", region.ResourceName, "Instance"),
-		&ec2.InstanceArgs{
-			VpcSecurityGroupIds: pulumi.StringArray{newSecurityGroup.Name},
-			Ami:                 pulumi.String(region.Instance.AMI),
-			InstanceType:        pulumi.String(region.Instance.InstanceType),
-			NetworkInterfaces: ec2.InstanceNetworkInterfaceArray{
-				&ec2.InstanceNetworkInterfaceArgs{
-					NetworkInterfaceId: newNetworkInterface.ID(),
-					DeviceIndex:        pulumi.Int(0),
-				},
-			},
-		})
-
-	if err != nil {
-		return nil, err
-	}
-
-	return instance, nil
-}
-
 func (d *Deployment) createNewSecurityGroup(
 	ctx *pulumi.Context,
 	region *Region,
@@ -203,4 +176,31 @@ func (d *Deployment) createNewSecurityGroup(
 	}
 
 	return securityGroup, nil
+}
+
+func (d *Deployment) createNewInstance(
+	ctx *pulumi.Context,
+	region *Region,
+	newNetworkInterface *ec2.NetworkInterface,
+	newSecurityGroup *ec2.SecurityGroup,
+) (*ec2.Instance, error) {
+	instance, err := ec2.NewInstance(ctx,
+		fmt.Sprintf("%s%s", region.ResourceName, "Instance"),
+		&ec2.InstanceArgs{
+			VpcSecurityGroupIds: pulumi.StringArray{newSecurityGroup.Name},
+			Ami:                 pulumi.String(region.Instance.AMI),
+			InstanceType:        pulumi.String(region.Instance.InstanceType),
+			NetworkInterfaces: ec2.InstanceNetworkInterfaceArray{
+				&ec2.InstanceNetworkInterfaceArgs{
+					NetworkInterfaceId: newNetworkInterface.ID(),
+					DeviceIndex:        pulumi.Int(0),
+				},
+			},
+		})
+
+	if err != nil {
+		return nil, err
+	}
+
+	return instance, nil
 }
