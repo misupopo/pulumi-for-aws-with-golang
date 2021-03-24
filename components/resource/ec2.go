@@ -187,7 +187,7 @@ func (d *Deployment) createNewInstance(
 	instance, err := ec2.NewInstance(ctx,
 		fmt.Sprintf("%s%s", region.ResourceName, "Instance"),
 		&ec2.InstanceArgs{
-			VpcSecurityGroupIds: pulumi.StringArray{newSecurityGroup.Name},
+			//VpcSecurityGroupIds: pulumi.StringArray{newSecurityGroup.ID()}, これを指定しなくても紐づくのでコメントアウト
 			Ami:                 pulumi.String(region.Instance.AMI),
 			InstanceType:        pulumi.String(region.Instance.InstanceType),
 			NetworkInterfaces: ec2.InstanceNetworkInterfaceArray{
