@@ -143,7 +143,7 @@ func (d *Deployment) createNewSecurityGroup(
 	//}
 
 	securityGroup, err := ec2.NewSecurityGroup(ctx,
-		"ssh-sg",
+		fmt.Sprintf("%s%s", region.ResourceName, "-security-group"),
 		&ec2.SecurityGroupArgs{
 			Name:        pulumi.String(fmt.Sprintf("%s%s", region.ResourceName, "-security-group")),
 			VpcId:       newVpc.ID(),
