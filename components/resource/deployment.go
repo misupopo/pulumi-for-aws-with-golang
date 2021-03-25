@@ -2,6 +2,7 @@ package resource
 
 type Region struct {
 	ResourceName     string            `json:"ResourceName"`
+	KeyPairName      string            `json:"keyPairName"`
 	Location         string            `json:"Location"`
 	Vpc              *Vpc              `json:"vpc"`
 	Subnet           *Subnet           `json:"subnet"`
@@ -16,6 +17,7 @@ type Deployment struct {
 func newRegion(region Region) *Region {
 	return &Region{
 		ResourceName:     region.ResourceName,
+		KeyPairName:      region.KeyPairName,
 		Location:         region.Location,
 		Vpc:              region.Vpc,
 		Subnet:           region.Subnet,
