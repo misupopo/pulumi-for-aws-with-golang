@@ -292,3 +292,22 @@ func (d *Deployment) createNewRouteTableAssociation(
 
 	return nil
 }
+
+func (d *Deployment) createNewEip(
+	ctx *pulumi.Context,
+	region *Region,
+	newInstance *ec2.Instance,
+) (*ec2.Eip, error) {
+	eip, err := ec2.NewEip(ctx,
+		fmt.Sprintf("%s%s", region.ResourceName, "-eip"),
+		&ec2.EipArgs{
+			Instance: newInstance.ID(),
+			Vpc:      pulumi.Bool(true),
+		})
+
+	if err != nil {
+		return nil, err
+	}
+
+	return eip, nil
+}

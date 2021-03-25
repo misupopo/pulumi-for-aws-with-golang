@@ -66,12 +66,14 @@ func Setup(ctx *pulumi.Context) error {
 		return err
 	}
 
-	_, err = deployment.createNewInstance(ctx, region, newNetworkInterface, newSecurityGroup)
+	newInstance, err := deployment.createNewInstance(ctx, region, newNetworkInterface, newSecurityGroup)
 
 	if err != nil {
 		ctx.Export("createNewInstance error", pulumi.Printf("%v", err))
 		return err
 	}
+
+	_, err = deployment.createNewEip(ctx, region, newInstance)
 
 	//ctx.Export("newInstance", pulumi.Printf("%v", newInstance))
 
