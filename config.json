@@ -4,11 +4,18 @@
     "cidr": "172.16.0.0/16",
     "tag": "vpcTest"
   },
-  "subnet": {
-    "cidr": "172.16.10.0/24",
-    "availabilityZone": "us-west-2a",
-    "tag": "subnetTest"
-  },
+  "subnet": [
+    {
+      "cidr": "172.16.10.0/24",
+      "availabilityZone": "us-west-2a",
+      "tag": "subnetTest01"
+    },
+    {
+      "cidr": "172.16.11.0/24",
+      "availabilityZone": "us-west-2a",
+      "tag": "subnetTest02"
+    }
+  ],
   "networkInterface": {
     "privateIp": "172.16.10.100",
     "tag": "networkInterfaceTest"

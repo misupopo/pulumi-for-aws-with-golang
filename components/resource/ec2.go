@@ -11,7 +11,7 @@ type Vpc struct {
 	Tag  string `json:"tag"`
 }
 
-type Subnet struct {
+type Subnet []struct {
 	Cidr             string `json:"cidr"`
 	AvailabilityZone string `json:"availabilityZone"`
 	Tag              string `json:"tag"`
@@ -74,15 +74,15 @@ func (d *Deployment) createNewSubnet(
 	ctx *pulumi.Context,
 	region *Region,
 	newVpc *ec2.Vpc,
-) (*ec2.Subnet, error) {
-	newSubnet, err := ec2.NewSubnet(ctx,
-		fmt.Sprintf("%s%s", region.ResourceName, "-subnet"),
+) ([]*ec2.Subnet, error) {
+	newSubnet1, err := ec2.NewSubnet(ctx,
+		fmt.Sprintf("%s%s", region.ResourceName, "-subnet1"),
 		&ec2.SubnetArgs{
 			VpcId:            newVpc.ID(),
-			CidrBlock:        pulumi.String(region.Subnet.Cidr),
-			AvailabilityZone: pulumi.String(region.Subnet.AvailabilityZone),
+			CidrBlock:        pulumi.String((*region.Subnet)[0].Cidr),
+			AvailabilityZone: pulumi.String((*region.Subnet)[0].AvailabilityZone),
 			Tags: pulumi.StringMap{
-				"Name": pulumi.String(region.Subnet.Tag),
+				"Name": pulumi.String((*region.Subnet)[0].Tag),
 			},
 		})
 
@@ -90,18 +90,32 @@ func (d *Deployment) createNewSubnet(
 		return nil, err
 	}
 
-	return newSubnet, nil
+	newSubnet2, err := ec2.NewSubnet(ctx,
+		fmt.Sprintf("%s%s", region.ResourceName, "-subnet2"),
+		&ec2.SubnetArgs{
+			VpcId:            newVpc.ID(),
+			CidrBlock:        pulumi.String((*region.Subnet)[1].Cidr),
+			AvailabilityZone: pulumi.String((*region.Subnet)[1].AvailabilityZone),
+			Tags: pulumi.StringMap{
+				"Name": pulumi.String((*region.Subnet)[1].Tag),
+			},
+		})
+
+	var subnets []*ec2.Subnet
+	subnets = append([]*ec2.Subnet{}, newSubnet1, newSubnet2)
+
+	return subnets, nil
 }
 
 func (d *Deployment) createNetworkInterface(
 	ctx *pulumi.Context,
 	region *Region,
-	newSubnet *ec2.Subnet,
+	newSubnet []*ec2.Subnet,
 ) (*ec2.NetworkInterface, error) {
 	networkInterface, err := ec2.NewNetworkInterface(ctx,
 		fmt.Sprintf("%s%s", region.ResourceName, "-networkInterface"),
 		&ec2.NetworkInterfaceArgs{
-			SubnetId: newSubnet.ID(),
+			SubnetId: newSubnet[0].ID(),
 			PrivateIps: pulumi.StringArray{
 				pulumi.String(region.NetworkInterface.PrivateIp),
 			},
@@ -136,6 +150,20 @@ func (d *Deployment) createNewSecurityGroup(
 		})
 	}
 
+	var createdEgress ec2.SecurityGroupEgressArray
+
+	for _, v := range region.SecurityGroup.Ingress {
+		createdEgress = append(createdEgress, ec2.SecurityGroupEgressArgs{
+			Protocol:    pulumi.String(v.Protocol),
+			ToPort:      pulumi.Int(v.ToPort),
+			FromPort:    pulumi.Int(v.FromPort),
+			Description: pulumi.String(v.Description),
+			CidrBlocks:  pulumi.StringArray{
+				pulumi.String(v.CidrBlocks[0]),
+			},
+		})
+	}
+
 	securityGroup, err := ec2.NewSecurityGroup(ctx,
 		fmt.Sprintf("%s%s", region.ResourceName, "-security-group"),
 		&ec2.SecurityGroupArgs{
@@ -143,17 +171,7 @@ func (d *Deployment) createNewSecurityGroup(
 			VpcId:       newVpc.ID(),
 			Description: pulumi.String(region.SecurityGroup.Description),
 			Ingress: createdIngress,
-			Egress: ec2.SecurityGroupEgressArray{
-				ec2.SecurityGroupEgressArgs{
-					Protocol:    pulumi.String(region.SecurityGroup.Egress[0].Protocol),
-					ToPort:      pulumi.Int(region.SecurityGroup.Egress[0].ToPort),
-					FromPort:    pulumi.Int(region.SecurityGroup.Egress[0].FromPort),
-					Description: pulumi.String(region.SecurityGroup.Egress[0].Description),
-					CidrBlocks:  pulumi.StringArray{
-						pulumi.String(region.SecurityGroup.Egress[0].CidrBlocks[0]),
-					},
-				},
-			},
+			Egress: createdEgress,
 		})
 
 	if err != nil {

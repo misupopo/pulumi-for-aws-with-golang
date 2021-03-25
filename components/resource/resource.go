@@ -24,14 +24,14 @@ func Setup(ctx *pulumi.Context) error {
 		return err
 	}
 
-	newSubnet, err := deployment.createNewSubnet(ctx, region, newVpc)
+	newSubnets, err := deployment.createNewSubnet(ctx, region, newVpc)
 
 	if err != nil {
 		ctx.Export("createNewSubnet error", pulumi.Printf("%v", err))
 		return err
 	}
 
-	newNetworkInterface, err := deployment.createNetworkInterface(ctx, region, newSubnet)
+	newNetworkInterface, err := deployment.createNetworkInterface(ctx, region, newSubnets)
 
 	if err != nil {
 		ctx.Export("createNetworkInterface error", pulumi.Printf("%v", err))
