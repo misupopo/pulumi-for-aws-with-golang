@@ -236,30 +236,58 @@ func (d *Deployment) createNewInternetGateway(
 	return internetGateway, nil
 }
 
-//func (d *Deployment) createNewRouteTable(
-//	ctx *pulumi.Context,
-//	region *Region,
-//	newVpc *ec2.Vpc,
-//) (*ec2.RouteTable, error) {
-//	routeTable, err := ec2.NewRouteTable(ctx,
-//		fmt.Sprintf("%s%s", region.ResourceName, "-route-table"),
-//		&ec2.RouteTableArgs{
-//			VpcId: newVpc.ID(),
-//			Routes: ec2.RouteTableRouteArray{
-//				&ec2.RouteTableRouteArgs{
-//					CidrBlock: pulumi.String("10.0.1.0/24"),
-//					GatewayId: pulumi.Any(aws_internet_gateway.Main.Id),
-//				},
-//				&ec2.RouteTableRouteArgs{
-//					Ipv6CidrBlock:       pulumi.String("::/0"),
-//					EgressOnlyGatewayId: pulumi.Any(aws_egress_only_internet_gateway.Foo.Id),
-//				},
-//			},
-//		})
-//
-//	if err != nil {
-//		return err
-//	}
-//
-//	return routeTable
-//}
+func (d *Deployment) createNewRouteTable(
+	ctx *pulumi.Context,
+	region *Region,
+	newVpc *ec2.Vpc,
+	nweInternetGateway *ec2.InternetGateway,
+) (*ec2.RouteTable, error) {
+	routeTable, err := ec2.NewRouteTable(ctx,
+		fmt.Sprintf("%s%s", region.ResourceName, "-route-table"),
+		&ec2.RouteTableArgs{
+			VpcId: newVpc.ID(),
+			Routes: ec2.RouteTableRouteArray{
+				&ec2.RouteTableRouteArgs{
+					CidrBlock: pulumi.String("0.0.0.0/0"),
+					GatewayId: nweInternetGateway.ID(),
+				},
+			},
+		})
+
+	if err != nil {
+		return nil, err
+	}
+
+	return routeTable, nil
+}
+
+func (d *Deployment) createNewRouteTableAssociation(
+	ctx *pulumi.Context,
+	region *Region,
+	newSubnets []*ec2.Subnet,
+	newRouteTable *ec2.RouteTable,
+) error {
+	_, err := ec2.NewRouteTableAssociation(ctx,
+		fmt.Sprintf("%s%s", region.ResourceName, "-route-table-association1"),
+		&ec2.RouteTableAssociationArgs{
+			SubnetId:     newSubnets[0].ID(),
+			RouteTableId: newRouteTable.ID(),
+		})
+
+	if err != nil {
+		return err
+	}
+
+	_, err = ec2.NewRouteTableAssociation(ctx,
+		fmt.Sprintf("%s%s", region.ResourceName, "-route-table-association2"),
+		&ec2.RouteTableAssociationArgs{
+			SubnetId:     newSubnets[1].ID(),
+			RouteTableId: newRouteTable.ID(),
+		})
+
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
