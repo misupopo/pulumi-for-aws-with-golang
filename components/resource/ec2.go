@@ -122,25 +122,19 @@ func (d *Deployment) createNewSecurityGroup(
 	region *Region,
 	newVpc *ec2.Vpc,
 ) (*ec2.SecurityGroup, error) {
-	//var createdEgress []ec2.SecurityGroupIngressArray
-	//
-	//for _, v := range region.SecurityGroup.Ingress {
-	//	createdEgress = append(createdEgress, ec2.SecurityGroupIngressArgs{
-	//		Protocol:    pulumi.String(v.Protocol),
-	//		ToPort:      pulumi.Int(v.ToPort),
-	//		FromPort:    pulumi.Int(v.FromPort),
-	//		Description: pulumi.String(v.Description),
-	//		CidrBlocks:  pulumi.StringArray{
-	//			pulumi.String("0.0.0.0/0"),
-	//		},
-	//	})
-	//	//createdEgress[i] = ec2.SecurityGroupIngressArgs{
-	//	//	Protocol:    pulumi.String(v.Protocol),
-	//	//	ToPort:      pulumi.Int(v.ToPort),
-	//	//	FromPort:    pulumi.Int(v.FromPort),
-	//	//	Description: pulumi.String(v.Description),
-	//	//}
-	//}
+	var createdIngress ec2.SecurityGroupIngressArray
+
+	for _, v := range region.SecurityGroup.Ingress {
+		createdIngress = append(createdIngress, ec2.SecurityGroupIngressArgs{
+			Protocol:    pulumi.String(v.Protocol),
+			ToPort:      pulumi.Int(v.ToPort),
+			FromPort:    pulumi.Int(v.FromPort),
+			Description: pulumi.String(v.Description),
+			CidrBlocks:  pulumi.StringArray{
+				pulumi.String(v.CidrBlocks[0]),
+			},
+		})
+	}
 
 	securityGroup, err := ec2.NewSecurityGroup(ctx,
 		fmt.Sprintf("%s%s", region.ResourceName, "-security-group"),
@@ -148,17 +142,7 @@ func (d *Deployment) createNewSecurityGroup(
 			Name:        pulumi.String(fmt.Sprintf("%s%s", region.ResourceName, "-security-group")),
 			VpcId:       newVpc.ID(),
 			Description: pulumi.String(region.SecurityGroup.Description),
-			Ingress: ec2.SecurityGroupIngressArray{
-				ec2.SecurityGroupIngressArgs{
-					Protocol:    pulumi.String(region.SecurityGroup.Ingress[0].Protocol),
-					ToPort:      pulumi.Int(region.SecurityGroup.Ingress[0].ToPort),
-					FromPort:    pulumi.Int(region.SecurityGroup.Ingress[0].FromPort),
-					Description: pulumi.String(region.SecurityGroup.Ingress[0].Description),
-					CidrBlocks:  pulumi.StringArray{
-						pulumi.String(region.SecurityGroup.Ingress[0].CidrBlocks[0]),
-					},
-				},
-			},
+			Ingress: createdIngress,
 			Egress: ec2.SecurityGroupEgressArray{
 				ec2.SecurityGroupEgressArgs{
 					Protocol:    pulumi.String(region.SecurityGroup.Egress[0].Protocol),
@@ -186,7 +170,7 @@ func (d *Deployment) createNewInstance(
 	newSecurityGroup *ec2.SecurityGroup,
 ) (*ec2.Instance, error) {
 	instance, err := ec2.NewInstance(ctx,
-		fmt.Sprintf("%s%s", region.ResourceName, "Instance"),
+		fmt.Sprintf("%s%s", region.ResourceName, "-instance"),
 		&ec2.InstanceArgs{
 			//VpcSecurityGroupIds: pulumi.StringArray{newSecurityGroup.ID()}, これを指定しなくても紐づくのでコメントアウト
 			Ami:                 pulumi.String(region.Instance.AMI),
@@ -202,6 +186,13 @@ func (d *Deployment) createNewInstance(
 	if err != nil {
 		return nil, err
 	}
+
+	_, err = ec2.NewNetworkInterfaceSecurityGroupAttachment(ctx,
+		fmt.Sprintf("%s%s", region.ResourceName, "-security-group-attachment"),
+		&ec2.NetworkInterfaceSecurityGroupAttachmentArgs{
+			SecurityGroupId:    newSecurityGroup.ID(),
+			NetworkInterfaceId: instance.PrimaryNetworkInterfaceId,
+		})
 
 	return instance, nil
 }

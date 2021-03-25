@@ -40,7 +40,7 @@
   },
   "instance": {
     "ami": "ami-02701bcdc5509e57b",
-    "instanceType": "t2.xlarge",
+    "instanceType": "t2.micro",
     "tag": "instanceTest"
   }
 }
