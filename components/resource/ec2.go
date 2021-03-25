@@ -107,7 +107,7 @@ func (d *Deployment) createNewSubnet(
 	return subnets, nil
 }
 
-func (d *Deployment) createNetworkInterface(
+func (d *Deployment) createNewNetworkInterface(
 	ctx *pulumi.Context,
 	region *Region,
 	newSubnet []*ec2.Subnet,

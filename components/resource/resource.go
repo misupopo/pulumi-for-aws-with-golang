@@ -31,17 +31,17 @@ func Setup(ctx *pulumi.Context) error {
 		return err
 	}
 
-	newNetworkInterface, err := deployment.createNetworkInterface(ctx, region, newSubnets)
+	newNetworkInterface, err := deployment.createNewNetworkInterface(ctx, region, newSubnets)
 
 	if err != nil {
-		ctx.Export("createNetworkInterface error", pulumi.Printf("%v", err))
+		ctx.Export("createNewNetworkInterface error", pulumi.Printf("%v", err))
 		return err
 	}
 
 	nweInternetGateway, err := deployment.createNewInternetGateway(ctx, region, newVpc)
 
 	if err != nil {
-		ctx.Export("createNetworkInterface error", pulumi.Printf("%v", err))
+		ctx.Export("createNewNetworkInterface error", pulumi.Printf("%v", err))
 		return err
 	}
 
