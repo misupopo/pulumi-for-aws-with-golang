@@ -38,6 +38,13 @@ func Setup(ctx *pulumi.Context) error {
 		return err
 	}
 
+	_, err = deployment.createNewInternetGateway(ctx, region, newVpc)
+
+	if err != nil {
+		ctx.Export("createNetworkInterface error", pulumi.Printf("%v", err))
+		return err
+	}
+
 	newSecurityGroup, err := deployment.createNewSecurityGroup(ctx, region, newVpc)
 
 	if err != nil {
