@@ -75,6 +75,25 @@ func Setup(ctx *pulumi.Context) error {
 
 	_, err = deployment.createNewEip(ctx, region, newInstance)
 
+	if err != nil {
+		ctx.Export("createNewEip error", pulumi.Printf("%v", err))
+		return err
+	}
+
+	_, err = deployment.createNewLoadBalancer(ctx, region, newSubnets, newSecurityGroup)
+
+	if err != nil {
+		ctx.Export("createNewLoadBalancer error", pulumi.Printf("%v", err))
+		return err
+	}
+
+	_, err = deployment.createNewTargetGroup(ctx, region, newVpc)
+
+	if err != nil {
+		ctx.Export("createNewTargetGroup error", pulumi.Printf("%v", err))
+		return err
+	}
+
 	//ctx.Export("newInstance", pulumi.Printf("%v", newInstance))
 
 	return nil

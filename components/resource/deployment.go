@@ -9,6 +9,7 @@ type Region struct {
 	NetworkInterface *NetworkInterface `json:"networkInterface"`
 	SecurityGroup    *SecurityGroup    `json:"SecurityGroup"`
 	Instance         *Instance         `json:"instance"`
+	LoadBalancer     *LoadBalancer     `json:"loadBalancer"`
 }
 
 type Deployment struct {
@@ -24,5 +25,6 @@ func newRegion(region Region) *Region {
 		NetworkInterface: region.NetworkInterface,
 		SecurityGroup:    region.SecurityGroup,
 		Instance:         region.Instance,
+		LoadBalancer:     region.LoadBalancer,
 	}
 }

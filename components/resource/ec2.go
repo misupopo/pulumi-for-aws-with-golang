@@ -74,6 +74,7 @@ func (d *Deployment) createNewSubnet(
 	ctx *pulumi.Context,
 	region *Region,
 	newVpc *ec2.Vpc,
+
 ) ([]*ec2.Subnet, error) {
 	newSubnet1, err := ec2.NewSubnet(ctx,
 		fmt.Sprintf("%s%s", region.ResourceName, "-subnet1"),

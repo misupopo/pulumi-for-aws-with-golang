@@ -13,7 +13,7 @@
     },
     {
       "cidr": "172.16.11.0/24",
-      "availabilityZone": "us-west-2a",
+      "availabilityZone": "us-west-2b",
       "tag": "subnetTest02"
     }
   ],
@@ -50,5 +50,8 @@
     "ami": "ami-02701bcdc5509e57b",
     "instanceType": "t2.micro",
     "tag": "instanceTest"
+  },
+  "loadBalancer": {
+    "loadBalancerType": "application"
   }
 }
