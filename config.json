@@ -1,6 +1,6 @@
 {
   "ResourceName": "superTest",
-  "keyPairName": "superTestKeyPair",
+  "keyPairName": "superTestKeyPair01",
   "vpc": {
     "cidr": "172.16.0.0/16",
     "tag": "vpcTest"
@@ -29,6 +29,24 @@
         "toPort": 22,
         "fromPort": 22,
         "description": "Allow inbound TCP 22",
+        "cidrBlocks": [
+          "0.0.0.0/0"
+        ]
+      },
+      {
+        "protocol": "tcp",
+        "toPort": 80,
+        "fromPort": 80,
+        "description": "Allow inbound TCP 80",
+        "cidrBlocks": [
+          "0.0.0.0/0"
+        ]
+      },
+      {
+        "protocol": "tcp",
+        "toPort": 31001,
+        "fromPort": 31001,
+        "description": "Allow inbound TCP 31001",
         "cidrBlocks": [
           "0.0.0.0/0"
         ]
