@@ -130,10 +130,13 @@ func (d *Deployment) createNewListenerRule(
 	newListener []*lb.Listener,
 	newTargetGroup []*lb.TargetGroup,
 ) (*lb.ListenerRule, error) {
+	// pulumi.String("/api/*")は下記のURLでアクセスができる状態のこと
+	// http://hogehoge/api/index.html
+	// pwd → /home/ubuntu/api/index.htmlにファイルがある状態
 	listenerRule, err := lb.NewListenerRule(ctx,
 		fmt.Sprintf("%s%s", region.ResourceName, "-listener-roule"),
 		&lb.ListenerRuleArgs{
-			ListenerArn: newListener[1].Arn,
+			ListenerArn: newListener[0].Arn,
 			Priority:    pulumi.Int(99),
 			Actions: lb.ListenerRuleActionArray{
 				&lb.ListenerRuleActionArgs{
@@ -145,7 +148,7 @@ func (d *Deployment) createNewListenerRule(
 				&lb.ListenerRuleConditionArgs{
 					PathPattern: &lb.ListenerRuleConditionPathPatternArgs{
 						Values: pulumi.StringArray{
-							pulumi.String("/api/"),
+							pulumi.String("/api/*"),
 						},
 					},
 				},
