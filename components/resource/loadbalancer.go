@@ -44,9 +44,10 @@ func (d *Deployment) createNewTargetGroup(
 	ctx *pulumi.Context,
 	region *Region,
 	newVpc *ec2.Vpc,
-) (*lb.TargetGroup, error) {
-	targetGroup, err := lb.NewTargetGroup(ctx,
-		fmt.Sprintf("%s%s", region.ResourceName, "-target-group"),
+) ([]*lb.TargetGroup, error) {
+	// 文字数制限32文字以内に収めないといけないためtgに省略
+	targetGroup1, err := lb.NewTargetGroup(ctx,
+		fmt.Sprintf("%s%s", region.ResourceName, "-tg-80"),
 		&lb.TargetGroupArgs{
 			Port:     pulumi.Int(80),
 			Protocol: pulumi.String("HTTP"),
@@ -57,6 +58,21 @@ func (d *Deployment) createNewTargetGroup(
 		return nil, err
 	}
 
+	targetGroup2, err := lb.NewTargetGroup(ctx,
+		fmt.Sprintf("%s%s", region.ResourceName, "-tg-31001"),
+		&lb.TargetGroupArgs{
+			Port:     pulumi.Int(31001),
+			Protocol: pulumi.String("HTTP"),
+			VpcId:    newVpc.ID(),
+		})
+
+	if err != nil {
+		return nil, err
+	}
+
+	var targetGroup []*lb.TargetGroup
+	targetGroup = append([]*lb.TargetGroup{}, targetGroup1, targetGroup2)
+
 	return targetGroup, err
 }
 
@@ -64,10 +80,10 @@ func (d *Deployment) createNewListener(
 	ctx *pulumi.Context,
 	region *Region,
 	newLoadBalancer *alb.LoadBalancer,
-	newTargetGroup *lb.TargetGroup,
-) (*lb.Listener, error) {
-	listener, err := lb.NewListener(ctx,
-		fmt.Sprintf("%s%s", region.ResourceName, "-listener"),
+	newTargetGroup []*lb.TargetGroup,
+) ([]*lb.Listener, error) {
+	listener1, err := lb.NewListener(ctx,
+		fmt.Sprintf("%s%s", region.ResourceName, "-listener-port-80"),
 		&lb.ListenerArgs{
 			LoadBalancerArn: newLoadBalancer.Arn,
 			Port:            pulumi.Int(80),
@@ -75,7 +91,7 @@ func (d *Deployment) createNewListener(
 			DefaultActions: lb.ListenerDefaultActionArray{
 				&lb.ListenerDefaultActionArgs{
 					Type:           pulumi.String("forward"),
-					TargetGroupArn: newTargetGroup.Arn,
+					TargetGroupArn: newTargetGroup[0].Arn,
 				},
 			},
 		})
@@ -84,31 +100,52 @@ func (d *Deployment) createNewListener(
 		return nil, err
 	}
 
+	listener2, err := lb.NewListener(ctx,
+		fmt.Sprintf("%s%s", region.ResourceName, "-listener-port-31001"),
+		&lb.ListenerArgs{
+			LoadBalancerArn: newLoadBalancer.Arn,
+			Port:            pulumi.Int(31001),
+			Protocol:        pulumi.String("HTTP"),
+			DefaultActions: lb.ListenerDefaultActionArray{
+				&lb.ListenerDefaultActionArgs{
+					Type:           pulumi.String("forward"),
+					TargetGroupArn: newTargetGroup[1].Arn,
+				},
+			},
+		})
+
+	if err != nil {
+		return nil, err
+	}
+
+	var listener []*lb.Listener
+	listener = append([]*lb.Listener{}, listener1, listener2)
+
 	return listener, nil
 }
 
 func (d *Deployment) createNewListenerRule(
 	ctx *pulumi.Context,
 	region *Region,
-	newListener *lb.Listener,
-	newTargetGroup *lb.TargetGroup,
+	newListener []*lb.Listener,
+	newTargetGroup []*lb.TargetGroup,
 ) (*lb.ListenerRule, error) {
 	listenerRule, err := lb.NewListenerRule(ctx,
-		fmt.Sprintf("%s%s", region.ResourceName, "-listener"),
+		fmt.Sprintf("%s%s", region.ResourceName, "-listener-roule"),
 		&lb.ListenerRuleArgs{
-			ListenerArn: newListener.Arn,
+			ListenerArn: newListener[1].Arn,
 			Priority:    pulumi.Int(99),
 			Actions: lb.ListenerRuleActionArray{
 				&lb.ListenerRuleActionArgs{
 					Type:           pulumi.String("forward"),
-					TargetGroupArn: newTargetGroup.Arn,
+					TargetGroupArn: newTargetGroup[1].Arn,
 				},
 			},
 			Conditions: lb.ListenerRuleConditionArray{
 				&lb.ListenerRuleConditionArgs{
 					PathPattern: &lb.ListenerRuleConditionPathPatternArgs{
 						Values: pulumi.StringArray{
-							pulumi.String("/static/"),
+							pulumi.String("/api/"),
 						},
 					},
 				},

@@ -104,7 +104,7 @@ func Setup(ctx *pulumi.Context) error {
 	_, err = deployment.createNewListenerRule(ctx, region, newListener, newTargetGroup)
 
 	if err != nil {
-		ctx.Export("createNewListenerRule error", pulumi.Printf("%v", err))
+		ctx.Export("createNewListener error", pulumi.Printf("%v", err))
 		return err
 	}
 
