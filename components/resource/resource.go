@@ -108,6 +108,13 @@ func Setup(ctx *pulumi.Context) error {
 		return err
 	}
 
+	_, err = deployment.createNewTargetGroupAttachment(ctx, region, newInstance, newTargetGroup)
+
+	if err != nil {
+		ctx.Export("createNewTargetGroupAttachment error", pulumi.Printf("%v", err))
+		return err
+	}
+
 	//ctx.Export("newInstance", pulumi.Printf("%v", newInstance))
 
 	return nil

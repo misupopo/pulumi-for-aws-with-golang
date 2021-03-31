@@ -158,3 +158,39 @@ func (d *Deployment) createNewListenerRule(
 
 	return listenerRule, err
 }
+
+func (d *Deployment) createNewTargetGroupAttachment(
+	ctx *pulumi.Context,
+	region *Region,
+	newInstance *ec2.Instance,
+	newTargetGroup []*lb.TargetGroup,
+) ([]*lb.TargetGroupAttachment, error) {
+	targetGroupAttachment1, err := lb.NewTargetGroupAttachment(ctx,
+		fmt.Sprintf("%s%s", region.ResourceName, "-tg-attachment1"),
+		&lb.TargetGroupAttachmentArgs{
+			TargetGroupArn: newTargetGroup[0].Arn,
+			TargetId:       newInstance.ID(),
+			Port:           pulumi.Int(80),
+		})
+
+	if err != nil {
+		return nil, err
+	}
+
+	targetGroupAttachment2, err := lb.NewTargetGroupAttachment(ctx,
+		fmt.Sprintf("%s%s", region.ResourceName, "-tg-attachment2"),
+		&lb.TargetGroupAttachmentArgs{
+			TargetGroupArn: newTargetGroup[1].Arn,
+			TargetId:       newInstance.ID(),
+			Port:           pulumi.Int(31001),
+		})
+
+	if err != nil {
+		return nil, err
+	}
+
+	var targetGroupAttachment []*lb.TargetGroupAttachment
+	targetGroupAttachment = append([]*lb.TargetGroupAttachment{}, targetGroupAttachment1, targetGroupAttachment2)
+
+	return targetGroupAttachment, nil
+}
