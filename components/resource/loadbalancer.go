@@ -60,3 +60,64 @@ func (d *Deployment) createNewTargetGroup(
 	return targetGroup, err
 }
 
+func (d *Deployment) createNewListener(
+	ctx *pulumi.Context,
+	region *Region,
+	newLoadBalancer *alb.LoadBalancer,
+	newTargetGroup *lb.TargetGroup,
+) (*lb.Listener, error) {
+	listener, err := lb.NewListener(ctx,
+		fmt.Sprintf("%s%s", region.ResourceName, "-listener"),
+		&lb.ListenerArgs{
+			LoadBalancerArn: newLoadBalancer.Arn,
+			Port:            pulumi.Int(80),
+			Protocol:        pulumi.String("HTTP"),
+			DefaultActions: lb.ListenerDefaultActionArray{
+				&lb.ListenerDefaultActionArgs{
+					Type:           pulumi.String("forward"),
+					TargetGroupArn: newTargetGroup.Arn,
+				},
+			},
+		})
+
+	if err != nil {
+		return nil, err
+	}
+
+	return listener, nil
+}
+
+func (d *Deployment) createNewListenerRule(
+	ctx *pulumi.Context,
+	region *Region,
+	newListener *lb.Listener,
+	newTargetGroup *lb.TargetGroup,
+) (*lb.ListenerRule, error) {
+	listenerRule, err := lb.NewListenerRule(ctx,
+		fmt.Sprintf("%s%s", region.ResourceName, "-listener"),
+		&lb.ListenerRuleArgs{
+			ListenerArn: newListener.Arn,
+			Priority:    pulumi.Int(99),
+			Actions: lb.ListenerRuleActionArray{
+				&lb.ListenerRuleActionArgs{
+					Type:           pulumi.String("forward"),
+					TargetGroupArn: newTargetGroup.Arn,
+				},
+			},
+			Conditions: lb.ListenerRuleConditionArray{
+				&lb.ListenerRuleConditionArgs{
+					PathPattern: &lb.ListenerRuleConditionPathPatternArgs{
+						Values: pulumi.StringArray{
+							pulumi.String("/static/"),
+						},
+					},
+				},
+			},
+		})
+
+	if err != nil {
+		return nil, err
+	}
+
+	return listenerRule, err
+}

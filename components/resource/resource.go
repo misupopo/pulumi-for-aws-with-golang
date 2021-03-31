@@ -80,17 +80,31 @@ func Setup(ctx *pulumi.Context) error {
 		return err
 	}
 
-	_, err = deployment.createNewLoadBalancer(ctx, region, newSubnets, newSecurityGroup)
+	newLoadBalancer, err := deployment.createNewLoadBalancer(ctx, region, newSubnets, newSecurityGroup)
 
 	if err != nil {
 		ctx.Export("createNewLoadBalancer error", pulumi.Printf("%v", err))
 		return err
 	}
 
-	_, err = deployment.createNewTargetGroup(ctx, region, newVpc)
+	newTargetGroup, err := deployment.createNewTargetGroup(ctx, region, newVpc)
 
 	if err != nil {
 		ctx.Export("createNewTargetGroup error", pulumi.Printf("%v", err))
+		return err
+	}
+
+	newListener, err := deployment.createNewListener(ctx, region, newLoadBalancer, newTargetGroup)
+
+	if err != nil {
+		ctx.Export("createNewListener error", pulumi.Printf("%v", err))
+		return err
+	}
+
+	_, err = deployment.createNewListenerRule(ctx, region, newListener, newTargetGroup)
+
+	if err != nil {
+		ctx.Export("createNewListenerRule error", pulumi.Printf("%v", err))
 		return err
 	}
 
