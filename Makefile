@@ -1,5 +1,4 @@
-
-bucketName = pulumi-state
+bucketName = pulumi-state-object
 currentTime = $(shell date +'%Y%m%d_%H%M%S')
 
 # 例 20210416_110811
@@ -20,5 +19,6 @@ pulumi-state-upload:
 get-s3-buckets:
 	aws s3 ls
 
+# ターゲットのs3フォルダと同期を行う
 sync-s3-buckets:
-	aws s3 sync ./state s3://$(bucketName)
+	aws s3 sync ./state s3://$(bucketName) --exclude ".gitkeep"
